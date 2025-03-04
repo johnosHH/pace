@@ -1,35 +1,28 @@
 import streamlit as st
 import pandas as pd
+import urllib.error
 
-# ✅ Load CSV file (Update this path if needed)
-CSV_FILE_PATH = "https://github.com/johnosHH/pace/blob/main/Pace-People%20-%20Sheet1.csv"
-
-@st.cache_data
-def load_data():
-    df = pd.read_csv(CSV_FILE_PATH, on_bad_lines='skip')  # Ensures no errors from extra characters
-    return df
+# ✅ Correct CSV File Path (GitHub Raw URL)
+CSV_FILE_PATH = "https://raw.githubusercontent.com/johnosHH/pace/main/Pace-People%20-%20Sheet1.csv"
 
 # --- Load Data from CSV ---
 @st.cache_data
 def load_data():
-    df = pd.read_csv(CSV_FILE_PATH)
-
-    # Clean column names (strip spaces and remove UTF-8 BOM)
-    df.columns = df.columns.str.strip()
-    df.columns = df.columns.str.replace("\ufeff", "")
-
-    # ✅ Rename columns if needed
-    column_mapping = {
-        "First Name": "First Name",
-        "Last Name": "Last Name",
-        "Email Address": "Email",
-        "Company": "Company",
-        "Title": "Title",
-        "Research": "Research"
-    }
-    df.rename(columns=column_mapping, inplace=True)
-
-    return df
+    try:
+        df = pd.read_csv(
+            CSV_FILE_PATH,
+            encoding="utf-8",  # Handles encoding issues
+            on_bad_lines="skip",  # Skips malformed lines
+            delimiter=",",  # Ensures correct column separation
+            dtype=str,  # Treats everything as text to avoid conversion issues
+        )
+        return df
+    except urllib.error.HTTPError as e:
+        st.error(f"❌ Failed to load CSV. HTTP Error: {e.code}")
+        return pd.DataFrame()  # Empty DataFrame to prevent app crashes
+    except pd.errors.ParserError:
+        st.error("❌ CSV parsing failed. Please check the file format.")
+        return pd.DataFrame()
 
 df = load_data()
 
@@ -75,7 +68,7 @@ st.subheader("Write Email")
 if selected_record is not None:
     st.markdown(f"**Recipient:** {selected_record['First Name']} {selected_record['Last Name']} ({selected_record['Email']})")
 
-# ✅ New Field: Subject Line Input
+# ✅ Subject Line Input
 subject_line = st.text_input("Email Subject", value="Your Subject Here")
 
 # ✅ Email Body Input
@@ -85,7 +78,7 @@ email_body = st.text_area("Email Body", height=200)
 if email_body and selected_record is not None:
     st.markdown("### Email Preview")
     st.markdown(f"**To:** {selected_record['First Name']} {selected_record['Last Name']} ({selected_record['Email']})")
-    st.markdown(f"**Subject:** {subject_line}")  # Updated to use user input
+    st.markdown(f"**Subject:** {subject_line}")
     st.markdown(f"**Body:**\n{email_body}")
 
     # --- Send to Instantly Button (Demo) ---
