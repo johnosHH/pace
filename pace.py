@@ -2,7 +2,12 @@ import streamlit as st
 import pandas as pd
 
 # ✅ Load CSV file (Update this path if needed)
-CSV_FILE_PATH = r"C:\Users\johnp\OneDrive\My Downloads\Pace-People - Sheet1.csv"
+CSV_FILE_PATH = "https://github.com/johnosHH/pace/blob/main/Pace-People%20-%20Sheet1.csv"
+
+@st.cache_data
+def load_data():
+    df = pd.read_csv(CSV_FILE_PATH, on_bad_lines='skip')  # Ensures no errors from extra characters
+    return df
 
 # --- Load Data from CSV ---
 @st.cache_data
